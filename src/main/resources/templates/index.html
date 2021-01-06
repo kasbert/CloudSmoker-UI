@@ -1,0 +1,195 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+		integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+	<title>Cloud Smoker</title>
+
+
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.css">
+
+
+</head>
+
+<body>
+	<div class="container-fluid">
+		<!-- 
+		<h3 class="display-3">Vue.js Spring Boot</h3>
+	 -->
+		<p class="lead"></p>
+
+		<div id="contents-main">
+			<div class="lead">
+				<!-- 
+				<strong>Name of Event:</strong> <span th:text="${eventName}"></span>
+			 -->
+			</div>
+			<div id="contents">
+
+				<div class="container">
+
+					<h3 class="display-4">Smoker</h3>
+					<select v-model="selected" @change="deviceSelected()">
+						<option v-for="option in devices" v-bind:value="option.id">
+							{{ option.id }}</option>
+					</select>
+
+					<form @submit="checkForm" :action=deviceUrl method="put">
+						<p v-if="errors.length">
+							<b>Please correct the following error(s):</b>
+						<ul>
+							<li v-for="error in errors">{{ error }}</li>
+						</ul>
+						</p>
+						<div class="form-group row" v-if="selected">
+							<span class="col-sm-2 col-form-label">Mode</span>
+							<div class="col-sm-10">
+								<div class="form-check form-check-inline">
+									<input class="form-check-input" v-model="config.mode" v-bind:value="-2" type="radio"
+										name="exampleRadios" id="mode-2" value="option1" checked> <label
+										class="form-check-label" for="mode-2">
+										Temperature limit </label>
+								</div>
+								<div class="form-check form-check-inline">
+									<input class="form-check-input" v-model="config.mode" v-bind:value="-1" type="radio"
+										name="exampleRadios" id="mode-1" value="option2"> <label
+										class="form-check-label" for="mode-1"> Time
+										limit </label>
+								</div>
+								<div class="form-check form-check-inline">
+									<input class="form-check-input" v-model="config.mode" v-bind:value="0" type="radio"
+										name="exampleRadios" id="mode0" value="option3"> <label
+										class="form-check-label" for="mode0"> Off </label>
+								</div>
+								<div class="form-check form-check-inline">
+									<input class="form-check-input" v-model="config.mode" v-bind:value="100" type="radio"
+										name="exampleRadios" id="mode1" value="option4"> <label
+										class="form-check-label" for="mode1"> On </label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group row" v-if="config.mode==-2">
+							<label class="col-sm-2 col-form-label" for=min>Min</label>
+							<div class="col-sm-1">
+								<input class="form-control" v-model="config.min"/>
+							</div>
+							<div class="col-sm-9">
+								<vue-slider id="min" ref="slider" v-model="config.min" v-bind="sliderOptions" >
+								</vue-slider>
+							</div>
+						</div>
+						<div class="form-group row" v-if="config.mode==-2">
+							<label class="col-sm-2 col-form-label" for=max>Max</label>
+							<div class="col-sm-1">
+								<input class="form-control" v-model="config.max"/>
+							</div>
+							<div class="col-sm-9">
+								<vue-slider id="max" ref="slider" v-model="config.max" v-bind="sliderOptions" >
+								</vue-slider>
+							</div>
+						</div>
+						<div class="form-group row" v-if="config.mode==-1">
+							<label class="col-sm-2 col-form-label" for=onMins>OnMins</label>
+							<div class="col-sm-1">
+								<input class="form-control" v-model="config.onMins"/>
+							</div>
+							<div class="col-sm-9">
+								<vue-slider id="onMins" ref="slider" v-model="config.onMins" v-bind="sliderOptions">
+								</vue-slider>
+							</div>
+						</div>
+						<div class="form-group row" v-if="config.mode==-1">
+							<label class="col-sm-2 col-form-label" for=offMins>OffMins</label>
+							<div class="col-sm-1">
+								<input class="form-control" v-model="config.offMins"/>
+							</div>
+							<div class="col-sm-9">
+								<vue-slider id="offMins" ref="slider" v-model="config.offMins" v-bind="sliderOptions">
+								</vue-slider>
+							</div>
+						</div>
+						<div class="form-group row" v-if="config.mode">
+							<label class="col-sm-2 col-form-label" for=maxMins>MaxMins</label>
+							<div class="col-sm-1">
+								<input class="form-control" v-model="config.maxMins"/>
+							</div>
+							<div class="col-sm-9">
+								<vue-slider id="maxMins" ref="slider" v-model="config.maxMins" v-bind="sliderOptions">
+								</vue-slider>
+							</div>
+						</div>
+
+						<div class="form-group row" v-if="selected">
+							<div class="col-sm-10">
+								<button type="submit" id="submit" class="btn btn-primary">Set
+									config</button>
+							</div>
+						</div>
+					</form>
+
+
+					<line-chart v-if="selected" :series="series" />
+				</div>
+
+<!-- 
+				<div>Selected: {{ selected }}</div>
+				<div>config: {{ config }}</div>
+				<div>state: {{ state }}</div>
+				<div>INFO: {{ devices }}</div>
+ -->
+			</div>
+		</div>
+	</div>
+
+	<!-- include Vue.js -->
+	<!-- we include babel js so that we can write ES6 code in the browser
+     for a more production like setup it is recommended to setup a build process
+     to transpile and minify the code (such as using webpack)
+ -->
+	<!-- Optional JavaScript -->
+	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+		integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+		integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+		crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+		integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+		crossorigin="anonymous"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vue-slider-component@latest/theme/default.css">
+
+	<script src="https://cdn.jsdelivr.net/npm/vue-slider-component@latest/dist/vue-slider-component.umd.min.js"></script>
+
+	<script src="https://cdn.rawgit.com/juijs/vue-graph/2216ae2f/dist/vue-graph.js"></script>
+
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js'></script>
+	
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+	<script src="https://unpkg.com/vue-chartjs/dist/vue-chartjs.min.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.21.1/babel.min.js"></script>
+
+	<script src="smoker.js"></script>
+
+	<script type="text/babel">
+	</script>
+</body>
+
+</html>
