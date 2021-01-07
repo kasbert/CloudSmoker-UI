@@ -1,2 +1,2 @@
 # CloudSmoker-UI
-User interface for CloudSmoker
+User interface for https://github.com/kasbert/CloudSmoker
