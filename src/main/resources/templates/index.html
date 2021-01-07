@@ -6,180 +6,256 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-
-	<!-- Bootstrap CSS -->
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-		integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-
 	<title>Cloud Smoker</title>
 
+	<!--
+		<link rel="stylesheet"
+		href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic|Material+Icons">
+	<link rel="stylesheet" href="https://unpkg.com/vue-material/dist/vue-material.min.css">
+	<link rel="stylesheet" href="https://unpkg.com/vue-material/dist/theme/default.css">
+	-->
 
-	<link rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.css">
-
+	<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+	<link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+	<link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
 
 </head>
 
 <body>
-	<div class="container-fluid">
-		<!-- 
-		<h3 class="display-3">Vue.js Spring Boot</h3>
-	 -->
-		<p class="lead"></p>
+	<div id="contents">
 
-		<div id="contents-main">
-			<div class="lead">
-				<!-- 
-				<strong>Name of Event:</strong> <span th:text="${eventName}"></span>
-			 -->
-			</div>
-			<div id="contents">
+		<v-app>
+			<v-app-bar app class="brown">
+				<h1 class="md-title white--text">Smoker</h1>
+			</v-app-bar>
+			<v-main>
+				<v-container>
+					<v-row v-if="devices">
+						<v-col cols="6">
+							<v-select v-model="selected" :items="devices" item-text="id" item-value="id" label="Device">
+							</v-select>
+						</v-col>
+						<v-col cols="6">
+							<v-card class="pa-2" outlined tile v-if="selected">
+								Firmware: {{state.firmware_version}}<br>
+								Last status time: {{state.updateTime}}
+							</v-card>
+						</v-col>
+					</v-row>
 
-				<div class="container">
+					<v-form @submit.prevent="submit" @submit="submitForm" :action=deviceUrl method="put" class=""
+						ref="form" v-model="valid" lazy-validation>
 
-					<h3 class="display-4">Smoker</h3>
-					<select v-model="selected" @change="deviceSelected()">
-						<option v-for="option in devices" v-bind:value="option.id">
-							{{ option.id }}</option>
-					</select>
+						<v-radio-group v-model="config.mode" row v-if="selected">
+							<v-radio label="Temperature limit" value="-2"></v-radio>
+							<v-radio label="Time limit" value="-1"></v-radio>
+							<v-radio label="Off" value="0"></v-radio>
+							<v-radio label="On" value="100"></v-radio>
+						</v-radio-group>
 
-					<form @submit="checkForm" :action=deviceUrl method="put">
-						<p v-if="errors.length">
-							<b>Please correct the following error(s):</b>
-						<ul>
-							<li v-for="error in errors">{{ error }}</li>
-						</ul>
-						</p>
-						<div class="form-group row" v-if="selected">
-							<span class="col-sm-2 col-form-label">Mode</span>
-							<div class="col-sm-10">
-								<div class="form-check form-check-inline">
-									<input class="form-check-input" v-model="config.mode" v-bind:value="-2" type="radio"
-										name="exampleRadios" id="mode-2" value="option1" checked> <label
-										class="form-check-label" for="mode-2">
-										Temperature limit </label>
-								</div>
-								<div class="form-check form-check-inline">
-									<input class="form-check-input" v-model="config.mode" v-bind:value="-1" type="radio"
-										name="exampleRadios" id="mode-1" value="option2"> <label
-										class="form-check-label" for="mode-1"> Time
-										limit </label>
-								</div>
-								<div class="form-check form-check-inline">
-									<input class="form-check-input" v-model="config.mode" v-bind:value="0" type="radio"
-										name="exampleRadios" id="mode0" value="option3"> <label
-										class="form-check-label" for="mode0"> Off </label>
-								</div>
-								<div class="form-check form-check-inline">
-									<input class="form-check-input" v-model="config.mode" v-bind:value="100" type="radio"
-										name="exampleRadios" id="mode1" value="option4"> <label
-										class="form-check-label" for="mode1"> On </label>
-								</div>
-							</div>
-						</div>
+						<v-range-slider label="Min and Max" max="150" min="-50" v-model="minmax" v-if="config.mode==-2">
+							<template v-slot:append>
+								<v-text-field :value="minmax[0]" @change="$set(minmax, 0, $event)" class="mt-0 pt-0"
+									hide-details single-line type="number" style="width: 60px"></v-text-field>
+								<strong class="px-2 pt-2"> - </strong>
+								<v-text-field :value="minmax[1]" @change="$set(minmax, 1, $event)" class="mt-0 pt-0"
+									hide-details single-line type="number" style="width: 60px"></v-text-field>
+							</template>
+						</v-range-slider>
 
-						<div class="form-group row" v-if="config.mode==-2">
-							<label class="col-sm-2 col-form-label" for=min>Min</label>
-							<div class="col-sm-1">
-								<input class="form-control" v-model="config.min"/>
-							</div>
-							<div class="col-sm-9">
-								<vue-slider id="min" ref="slider" v-model="config.min" v-bind="sliderOptions" >
-								</vue-slider>
-							</div>
-						</div>
-						<div class="form-group row" v-if="config.mode==-2">
-							<label class="col-sm-2 col-form-label" for=max>Max</label>
-							<div class="col-sm-1">
-								<input class="form-control" v-model="config.max"/>
-							</div>
-							<div class="col-sm-9">
-								<vue-slider id="max" ref="slider" v-model="config.max" v-bind="sliderOptions" >
-								</vue-slider>
-							</div>
-						</div>
-						<div class="form-group row" v-if="config.mode==-1">
-							<label class="col-sm-2 col-form-label" for=onMins>OnMins</label>
-							<div class="col-sm-1">
-								<input class="form-control" v-model="config.onMins"/>
-							</div>
-							<div class="col-sm-9">
-								<vue-slider id="onMins" ref="slider" v-model="config.onMins" v-bind="sliderOptions">
-								</vue-slider>
-							</div>
-						</div>
-						<div class="form-group row" v-if="config.mode==-1">
-							<label class="col-sm-2 col-form-label" for=offMins>OffMins</label>
-							<div class="col-sm-1">
-								<input class="form-control" v-model="config.offMins"/>
-							</div>
-							<div class="col-sm-9">
-								<vue-slider id="offMins" ref="slider" v-model="config.offMins" v-bind="sliderOptions">
-								</vue-slider>
-							</div>
-						</div>
-						<div class="form-group row" v-if="config.mode">
-							<label class="col-sm-2 col-form-label" for=maxMins>MaxMins</label>
-							<div class="col-sm-1">
-								<input class="form-control" v-model="config.maxMins"/>
-							</div>
-							<div class="col-sm-9">
-								<vue-slider id="maxMins" ref="slider" v-model="config.maxMins" v-bind="sliderOptions">
-								</vue-slider>
-							</div>
-						</div>
+						<!--
+					<v-slider label="Min" v-model="config.min" v-if="config.mode==-2" min="0" max="120">
+						<template v-slot:append>
+							<v-text-field v-model="config.min" class="mt-0 pt-0" hide-details single-line type="number"
+								style="width: 60px"></v-text-field>
+						</template>
+					</v-slider>
+					<v-slider label="Max" v-model="config.max" v-if="config.mode==-2" min="0" max="120">
+						<template v-slot:append>
+							<v-text-field v-model="config.max" class="mt-0 pt-0" hide-details single-line type="number"
+								style="width: 60px"></v-text-field>
+						</template>
+					</v-slider>
+					-->
+						<v-slider label="On Minutes" v-model="config.onMins" v-if="config.mode==-1" min="0" max="1440">
+							<template v-slot:append>
+								<v-text-field v-model="config.onMins" class="mt-0 pt-0" hide-details single-line
+									type="number" style="width: 60px"></v-text-field>
+							</template>
+						</v-slider>
+						<v-slider label="Off Minutes" v-model="config.offMins" v-if="config.mode==-1" min="0"
+							max="1440">
+							<template v-slot:append>
+								<v-text-field v-model="config.offMins" class="mt-0 pt-0" hide-details single-line
+									type="number" style="width: 60px"></v-text-field>
+							</template>
+						</v-slider>
+						<v-slider label="Max Minutes" v-model="config.maxMins" v-if="config.mode" min="0" max="28800">
+							<template v-slot:append>
+								<v-text-field v-model="config.maxMins" class="mt-0 pt-0" hide-details single-line
+									type="number" style="width: 60px"></v-text-field>
+							</template>
+						</v-slider>
 
-						<div class="form-group row" v-if="selected">
-							<div class="col-sm-10">
-								<button type="submit" id="submit" class="btn btn-primary">Set
-									config</button>
-							</div>
-						</div>
-					</form>
-
+						<v-btn type="submit" id="submit" :disabled="!valid" color="primary" class="mr-4"
+							@click="submitForm" v-if="selected">Set
+							config</v-btn>
+					</v-form>
 
 					<line-chart v-if="selected" :series="series" />
+
+					<!--
+
+					<div>
+						<div>Selected: {{ selected }}</div>
+						<div>Config: {{ config }}</div>
+						<div>State: {{ state }}</div>
+						<div>Valid: {{ valid }}</div>
+					</div>
+					-->
+
+
+				</v-container>
+			</v-main>
+		</v-app>
+
+		<!--
+
+		<md-app>
+
+			<md-app-toolbar class="md-primary">
+				<h1 class="md-title">Smoker</h1>
+			</md-app-toolbar>
+
+			<md-app-content class="xmd-layout">
+
+				<div class="xmd-layout-item">
+					<md-field>
+						<md-select v-model="selected" @change="deviceSelected()" name="device" id="device"
+							placeholder="Device">
+							<md-option v-for="option in devices" v-bind:value="option.id">{{ option.id }}</md-option>
+						</md-select>
+					</md-field>
 				</div>
 
-<!-- 
+				<form @submit="submitForm" :action=deviceUrl method="put" class="xmd-layout">
+
+					<p v-if="errors.length">
+						<b>Please correct the following error(s):</b>
+					<ul>
+						<li v-for="error in errors">{{ error }}</li>
+					</ul>
+					</p>
+
+					<div class="" v-if="selected">
+						<md-radio v-model="config.mode" value="-2">Temperature limit</md-radio>
+						<md-radio v-model="config.mode" value="-1">Time limit</md-radio>
+						<md-radio v-model="config.mode" value="0">Off</md-radio>
+						<md-radio v-model="config.mode" value="100">On</md-radio>
+					</div>
+
+					<md-field class="md-layout md-gutter" v-if="config.mode==-2" width="150px" :style="{width:'150px'}">
+						<label>Min</label>
+						<md-input v-model="config.min" class="md-layout-item" width="150px" :style="{width:'150px'}">
+						</md-input>
+					</md-field>
+					<md-field class="md-layout md-gutter" v-if="config.mode==-2">
+						<vue-slider id="min" ref="slider" v-model="config.min" v-bind="sliderOptions"
+							class="md-layout-item">
+						</vue-slider>
+					</md-field>
+
+					<md-field class="xmd-layout-item" v-if="config.mode==-2">
+						<label>Min</label>
+						<md-input v-model="config.min">Min</md-input>
+					</md-field>
+					<md-field class="xmd-layout-item" v-if="config.mode==-2">
+						<vue-slider id="min" ref="slider" v-model="config.min" v-bind="sliderOptions">
+						</vue-slider>
+					</md-field>
+					<md-field class="xmd-layout-item" v-if="config.mode==-2">
+						<label>Max</label>
+						<md-input v-model="config.max">Max</md-input>
+					</md-field>
+					<md-field class="xmd-layout" v-if="config.mode==-2">
+						<vue-slider id="max" ref="slider" v-model="config.max" v-bind="sliderOptions">
+						</vue-slider>
+					</md-field>
+					<md-field class="xmd-layout-item" v-if="config.mode==-1">
+						<label>On Minutes</label>
+						<md-input class="" v-model="config.onMins" />
+					</md-field>
+					<md-field class="xmd-layout" v-if="config.mode==-1">
+						<vue-slider id="onMins" ref="slider" v-model="config.onMins" v-bind="sliderOptions">
+						</vue-slider>
+					</md-field>
+					<md-field class="xmd-layout-item" v-if="config.mode==-1">
+						<label>Off Minutes</label>
+						<md-input class="" v-model="config.offMins" />
+					</md-field>
+					<md-field class="md-layout" v-if="config.mode==-1">
+						<vue-slider id="offMins" ref="slider" v-model="config.offMins" v-bind="sliderOptions">
+						</vue-slider>
+					</md-field>
+					<md-field class="xmd-layout-item" v-if="config.mode">
+						<label>Max Minutes</label>
+						<md-input class="" v-model="config.maxMins" />
+					</md-field>
+					<md-field class="md-layout" v-if="config.mode">
+						<vue-slider id="maxMins" ref="slider" v-model="config.maxMins" v-bind="sliderOptions">
+						</vue-slider>
+					</md-field>
+
+					<div class="xmd-layout-item" v-if="selected">
+						<md-button class="md-raised md-primary" type="submit" id="submit">Set config</md-button>
+					</div>
+				</form>
+
+
+				<line-chart v-if="selected" :series="series" />
+
+
+			</md-app-content>
+		</md-app>
+		-->
+		<!-- 
 				<div>Selected: {{ selected }}</div>
-				<div>config: {{ config }}</div>
-				<div>state: {{ state }}</div>
+				<div>Config: {{ config }}</div>
+				<div>State: {{ state }}</div>
 				<div>INFO: {{ devices }}</div>
  -->
-			</div>
-		</div>
 	</div>
+
 
 	<!-- include Vue.js -->
 	<!-- we include babel js so that we can write ES6 code in the browser
      for a more production like setup it is recommended to setup a build process
      to transpile and minify the code (such as using webpack)
  -->
-	<!-- Optional JavaScript -->
-	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-		integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-		crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
-		integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
-		crossorigin="anonymous"></script>
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
-		integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
-		crossorigin="anonymous"></script>
 
 	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+	<!--
 	<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
 
+
+	<script src="https://unpkg.com/vue"></script>
+	<script src="https://unpkg.com/vue-material"></script>
+
+
+
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vue-slider-component@latest/theme/default.css">
+	<script
+		src="https://cdn.jsdelivr.net/npm/vue-slider-component@latest/dist/vue-slider-component.umd.min.js"></script>
 
-	<script src="https://cdn.jsdelivr.net/npm/vue-slider-component@latest/dist/vue-slider-component.umd.min.js"></script>
+	-->
 
-	<script src="https://cdn.rawgit.com/juijs/vue-graph/2216ae2f/dist/vue-graph.js"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+
 
 	<script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js'></script>
-	
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
 	<script src="https://unpkg.com/vue-chartjs/dist/vue-chartjs.min.js"></script>

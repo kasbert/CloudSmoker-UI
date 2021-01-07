@@ -36,10 +36,10 @@
 			<artifactId>google-api-services-cloudiot</artifactId>
 			<version>v1-rev99-1.25.0</version>
 		</dependency>
-		<!-- <dependency> <groupId>com.google.cloud</groupId> <artifactId>google-cloud-storage</artifactId> 
-			</dependency> -->
-
-		<!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-gcp-starter -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-gcp-starter</artifactId>

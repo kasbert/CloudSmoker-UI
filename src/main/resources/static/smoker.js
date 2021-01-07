@@ -1,5 +1,6 @@
 //
 
+//Vue.use(VueMaterial.default);
 
 Vue.component('line-chart', {
   extends: VueChartJs.Line,
@@ -21,7 +22,7 @@ Vue.component('line-chart', {
     this.gradient.addColorStop(0.5, 'rgba(247,108,6, 0.25)');
     this.gradient.addColorStop(1, 'rgba(247,108,6, 0)');
 
-    zoptions = {
+    options = {
       responsive: true,
       maintainAspectRatio: false,
       aspectRatio: 0.5,
@@ -91,7 +92,7 @@ Vue.component('line-chart', {
     }
     chartdata.labels = labels;
 
-    this.renderChart(chartdata, zoptions)
+    this.renderChart(chartdata, options)
   }
 
 })
@@ -103,13 +104,16 @@ function deviceSelected() {
       console.log(device);
       this.config = device.config2;
       this.state = device.state2;
+      this.state.updateTime = device.state.updateTime;
       this.series = device.series;
+      this.minmax = [device.config2.min, device.config2.max]
     }
   }
 }
 
 var app = new Vue({
   el: '#contents',
+  vuetify: new Vuetify(),
   data: {
     devices: '',
     selected: '',
@@ -117,19 +121,22 @@ var app = new Vue({
     state: {},
     errors: [],
     series: {},
-    sliderOptions: {
-      max: 120,
-    },
+    minmax: [],
+    valid: true,
+    //sliderOptions: {
+    //  max: 120,
+    //  contained: true,
+    //},
   },
   mounted: function () {
     axios
       .get('/device')
       .then(response => {
-    	  this.devices = response.data;  
-    	  if (this.devices.length == 1) {
-    		  this.selected = this.devices[0].id;
-    		  this.deviceSelected();
-    	  }
+        this.devices = response.data;
+        if (this.devices.length == 1) {
+          this.selected = this.devices[0].id;
+          this.deviceSelected();
+        }
       })
       .catch(error => console.error(error))
   },
@@ -140,13 +147,16 @@ var app = new Vue({
   },
   methods: {
     deviceSelected: deviceSelected,
-    checkForm: function (event) {
+    validate: function (event) {
       this.errors = [];
       if (!this.selected) {
         this.errors.push('Selected required.');
       }
       // TODO validate all fields
       if (this.config.mode == -2) {
+        // FIXME not in validation
+        this.config.min = this.minmax[0];
+        this.config.max = this.minmax[1];
         if (!this.config.min) {
           this.errors.push('Min required.');
         }
@@ -165,27 +175,29 @@ var app = new Vue({
       } else {
         this.errors.push('Mode required.');
       }
-
-      if (this.errors.length) {
+      this.valid = (this.errors.length == 0)
+    },
+    submitForm: function (event) {
+      this.validate();
+      if (!this.valid) {
         event.preventDefault();
         return false;
       }
-      $('#submit').prop('disabled', true);
+      //$('#submit').prop('disabled', true);
       axios.put(this.deviceUrl, this.config)
         .then(function (response) {
-          $('#submit').prop('disabled', false);
+          //$('#submit').prop('disabled', false);
           console.log(response);
         })
         .catch(function (error) {
-          $('#submit').prop('disabled', false);
+          //$('#submit').prop('disabled', false);
           console.error(error);
         });
       event.preventDefault();
       return true;
-
     },
   },
   components: {
-    'vueSlider': window['vue-slider-component'],
+    //'vueSlider': window['vue-slider-component'],
   }
 })
