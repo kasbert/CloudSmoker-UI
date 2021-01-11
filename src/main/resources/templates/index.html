@@ -19,18 +19,49 @@
 	<link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
 	<link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.2.1/js.cookie.js"></script>
 </head>
 
 <body>
 	<div id="contents">
-
 		<v-app>
-			<v-app-bar app class="brown">
-				<h1 class="md-title white--text">Smoker</h1>
+			<v-app-bar app class="brown ">
+				<v-app-bar-title>
+					<span class="text-h3 white--text">Smoker</span>
+				</v-app-bar-title>
+				<v-spacer></v-spacer>
+
+				<v-toolbar-title v-if="user.login">
+					<div class="white--text text-subtitle-1">
+						<div class=" ">
+							Logged in as: <span>{{user.name}}</span>
+						</div>
+						<div>
+							<v-btn class="float-right" @click="logout" color="" x-small>Logout</v-btn>
+						</div>
+					</div>
+				</v-toolbar-title>
 			</v-app-bar>
 			<v-main>
 				<v-container>
-					<v-row v-if="devices">
+					<div class=" " v-if="!user.login">
+						<v-btn href="/oauth2/authorization/github" color="grey" class="white--text pa-5">
+							<svg class="octicon octicon-mark-github v-align-middle" height="32" viewBox="0 0 16 16"
+								version="1.1" width="32" aria-hidden="true">
+								<path fill-rule="evenodd"
+									d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z">
+								</path>
+							</svg>
+							<span class="pl-4">Login with GitHub</span>
+						</v-btn>
+					</div>
+					<div class=" " v-if="user.error">
+						{{user.error}}
+					</div>
+					<div class=" " v-if="user.login && !devices.length">
+						Loading devices
+					</div>
+					<v-row v-if="devices.length">
 						<v-col cols="6">
 							<v-select v-model="selected" :items="devices" item-text="id" item-value="id" label="Device">
 							</v-select>
@@ -97,8 +128,8 @@
 							</template>
 						</v-slider>
 
-						<v-btn type="submit" id="submit" :disabled="!valid" color="primary" class="mr-4"
-							@click="submitForm" v-if="selected">Set
+						<v-btn type="submit" id="submit" :disabled="!valid" color="primary" class="" @click="submitForm"
+							v-if="selected">Set
 							config</v-btn>
 					</v-form>
 

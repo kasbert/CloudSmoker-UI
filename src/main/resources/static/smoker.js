@@ -75,24 +75,25 @@ Vue.component('line-chart', {
       ]
     };
 
-    for (i of [0, 1, 2, 3]) {
-      // chartdata.datasets[i].label = this.series.columns[i + 1]
-      data = [];
-      for (value of this.series.values) {
-        data.push(value[i + 1]);
+    if (this.series && this.series.values) {
+      for (i of [0, 1, 2, 3]) {
+        // chartdata.datasets[i].label = this.series.columns[i + 1]
+        data = [];
+        for (value of this.series.values) {
+          data.push(value[i + 1]);
+        }
+        chartdata.datasets[i].data = data;
       }
-      chartdata.datasets[i].data = data;
+
+      labels = [];
+      for (value of this.series.values) {
+        // var d = moment(value[0]);d.format('H:mm')
+        labels.push(value[0]);
+      }
+      chartdata.labels = labels;
+
+      this.renderChart(chartdata, options)
     }
-
-
-    labels = [];
-    for (value of this.series.values) {
-      // var d = moment(value[0]);d.format('H:mm')
-      labels.push(value[0]);
-    }
-    chartdata.labels = labels;
-
-    this.renderChart(chartdata, options)
   }
 
 })
@@ -115,7 +116,8 @@ var app = new Vue({
   el: '#contents',
   vuetify: new Vuetify(),
   data: {
-    devices: '',
+    user: {},
+    devices: [],
     selected: '',
     config: {},
     state: {},
@@ -129,16 +131,37 @@ var app = new Vue({
     //},
   },
   mounted: function () {
+    axios.defaults.headers.post['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
+    axios.defaults.headers.put['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
+    axios.defaults.headers.delete['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
     axios
-      .get('/device')
+      .get('/user')
       .then(response => {
-        this.devices = response.data;
-        if (this.devices.length == 1) {
-          this.selected = this.devices[0].id;
-          this.deviceSelected();
-        }
+        this.user = response.data;
+
+        axios
+          .get('/device')
+          .then(response => {
+            this.devices = response.data;
+            if (this.devices.length == 1) {
+              this.selected = this.devices[0].id;
+              this.deviceSelected();
+            }
+          })
+          .catch(error => {
+            console.error(error);
+          })
+
       })
-      .catch(error => console.error(error))
+      .catch(error => {
+        if (error.response.status == 401) {
+          console.log("Not logged in");
+          this.$set(this.user, 'error', 'No access');
+        } else {
+          console.error(error);
+        }
+      });
+
   },
   computed: {
     deviceUrl: function () {
@@ -147,6 +170,27 @@ var app = new Vue({
   },
   methods: {
     deviceSelected: deviceSelected,
+    logout: function () {
+      axios
+        .post('/logout')
+        .then(response => {
+          this.user = {};
+          this.config = {};
+          this.state = {};
+          this.devices = [];
+          this.selected = '';
+        })
+        .catch(error => {
+          console.error(error);
+          this.user = {}; // TODO not always
+          this.config= {};
+          this.state = {};
+          this.devices = [];
+          this.selected = '';
+        }
+        );
+      return true;
+    },
     validate: function (event) {
       this.errors = [];
       if (!this.selected) {
