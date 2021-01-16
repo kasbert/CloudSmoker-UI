@@ -9,7 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class MainController implements ErrorController {
     private static final String PATH = "/error";
-	
+    Logger logger = LoggerFactory.getLogger(UserController.class);
+
 	// Serves Vue files
 	
     @GetMapping("/")
@@ -19,7 +20,9 @@ public class MainController implements ErrorController {
     }
 
     @RequestMapping(value = PATH)
-    public String error() {
+    public String error(HttpServletRequest request, Model model) {
+        logger.debug("Error " + request);
+        model.addAttribute("error", "error");
         return "forward:/";
     }
 
