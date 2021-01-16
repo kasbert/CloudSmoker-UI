@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class MainController implements ErrorController {
     private static final String PATH = "/error";
-    Logger logger = LoggerFactory.getLogger(UserController.class);
+    Logger logger = LoggerFactory.getLogger(MainController.class);
 
 	// Serves Vue files
 	
@@ -25,6 +25,8 @@ public class MainController implements ErrorController {
     @RequestMapping(value = PATH)
     public String error(HttpServletRequest request, Model model) {
         logger.debug("Error " + request);
+        String message = (String) request.getSession().getAttribute("error.message");
+        logger.debug("Error " + message);
         model.addAttribute("error", "error");
         return "forward:/";
     }
