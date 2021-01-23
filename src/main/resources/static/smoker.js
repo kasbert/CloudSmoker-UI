@@ -11,91 +11,98 @@ Vue.component('line-chart', {
     },
   },
   mounted() {
-    this.gradient = this.$refs.canvas.getContext('2d').createLinearGradient(0, 0, 0, 450)
-    this.gradient2 = this.$refs.canvas.getContext('2d').createLinearGradient(0, 0, 0, 450)
+    this.draw();
+  },
+  updated() {
+    this.draw();
+  },
+  methods: {
+    draw: function () {
+      this.gradient = this.$refs.canvas.getContext('2d').createLinearGradient(0, 0, 0, 450)
+      this.gradient2 = this.$refs.canvas.getContext('2d').createLinearGradient(0, 0, 0, 450)
 
-    this.gradient2.addColorStop(0, 'rgba(83,154,168, 0.9)')
-    this.gradient2.addColorStop(0.5, 'rgba(83,154,168, 0.5)');
-    this.gradient2.addColorStop(1, 'rgba(83,154,168, 0.2)');
+      this.gradient2.addColorStop(0, 'rgba(83,154,168, 0.9)')
+      this.gradient2.addColorStop(0.5, 'rgba(83,154,168, 0.5)');
+      this.gradient2.addColorStop(1, 'rgba(83,154,168, 0.2)');
 
-    this.gradient.addColorStop(0, 'rgba(247,108,6, 0.9)')
-    this.gradient.addColorStop(0.5, 'rgba(247,108,6, 0.25)');
-    this.gradient.addColorStop(1, 'rgba(247,108,6, 0)');
+      this.gradient.addColorStop(0, 'rgba(247,108,6, 0.9)')
+      this.gradient.addColorStop(0.5, 'rgba(247,108,6, 0.25)');
+      this.gradient.addColorStop(1, 'rgba(247,108,6, 0)');
 
-    options = {
-      responsive: true,
-      maintainAspectRatio: false,
-      aspectRatio: 0.5,
-      scales: {
-        xAxes: [{
-          type: 'time',
-          time: {
-            unit: 'minute'
+      options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        aspectRatio: 0.5,
+        scales: {
+          xAxes: [{
+            type: 'time',
+            time: {
+              unit: 'minute'
+            }
+          }]
+        },
+      };
+
+      chartdata = {
+        labels: [],
+        datasets: [
+          {
+            label: 'Temperature',
+            backgroundColor: 'rgba(0, 240, 0, 0.1)',
+            borderColor: '#0E0',
+            borderWidth: 2,
+            pointRadius: 0,
+            lineTension: 0.1,
+            data: []
+          }, {
+            label: 'Power',
+            borderColor: '#EE0',
+            borderWidth: 0.1,
+            pointRadius: 0,
+            backgroundColor: 'rgba(240, 128, 0, 0.1)',
+            lineTension: 0,
+            data: []
+          }, {
+            label: 'Min',
+            borderColor: "#FC2525",
+            borderWidth: 1,
+            pointRadius: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.0)',
+            lineTension: 0,
+            data: []
+          }, {
+            label: 'Max',
+            borderColor: '#E11',
+            pointRadius: 0,
+            borderWidth: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.0)',
+            lineTension: 0,
+            data: []
           }
-        }]
-      },
-    };
+        ]
+      };
 
-    chartdata = {
-      labels: [],
-      datasets: [
-        {
-          label: 'Temperature',
-          backgroundColor: 'rgba(0, 240, 0, 0.1)',
-          borderColor: '#0E0',
-          borderWidth: 2,
-          pointRadius: 0,
-          lineTension: 0.1,
-          data: []
-        }, {
-          label: 'Power',
-          borderColor: '#EE0',
-          borderWidth: 0.1,
-          pointRadius: 0,
-          backgroundColor: 'rgba(240, 128, 0, 0.1)',
-          lineTension: 0,
-          data: []
-        }, {
-          label: 'Min',
-          borderColor: "#FC2525",
-          borderWidth: 1,
-          pointRadius: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.0)',
-          lineTension: 0,
-          data: []
-        }, {
-          label: 'Max',
-          borderColor: '#E11',
-          pointRadius: 0,
-          borderWidth: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.0)',
-          lineTension: 0,
-          data: []
+      if (this.series && this.series.values) {
+        for (i of [0, 1, 2, 3]) {
+          // chartdata.datasets[i].label = this.series.columns[i + 1]
+          data = [];
+          for (value of this.series.values) {
+            data.push(value[i + 1]);
+          }
+          chartdata.datasets[i].data = data;
         }
-      ]
-    };
 
-    if (this.series && this.series.values) {
-      for (i of [0, 1, 2, 3]) {
-        // chartdata.datasets[i].label = this.series.columns[i + 1]
-        data = [];
+        labels = [];
         for (value of this.series.values) {
-          data.push(value[i + 1]);
+          // var d = moment(value[0]);d.format('H:mm')
+          labels.push(value[0]);
         }
-        chartdata.datasets[i].data = data;
-      }
+        chartdata.labels = labels;
 
-      labels = [];
-      for (value of this.series.values) {
-        // var d = moment(value[0]);d.format('H:mm')
-        labels.push(value[0]);
+        this.renderChart(chartdata, options)
       }
-      chartdata.labels = labels;
-
-      this.renderChart(chartdata, options)
     }
   }
-
 })
 
 var app = new Vue({
@@ -119,7 +126,7 @@ var app = new Vue({
   },
   mounted: function () {
     this.fetchUser();
-    this.timer = setInterval(this.refreshDevices, 6000)
+    this.timer = setInterval(this.refreshDevice, 60000)
     document.addEventListener('visibilitychange', this.visibilityChange);
   },
   computed: {
@@ -134,13 +141,26 @@ var app = new Vue({
         clearInterval(this.timer);
       } else {
         clearInterval(this.timer);
-        this.refreshDevices();
-        this.timer = setInterval(this.refreshDevices, 6000)
+        this.refreshDevice();
+        this.timer = setInterval(this.refreshDevice, 60000)
       }
     },
-    refreshDevices: function () {
+    refreshDevice: function () {
       if (this.selected) {
-        this.fetchDevices();
+        axios
+        .get(this.deviceUrl)
+        .then(response => {
+          device = response.data;
+          console.log(device);
+          this.config = device.config2;
+          this.state = device.state2;
+          this.state.updateTime = device.state.updateTime;
+          this.series = device.series;
+          this.minmax = [device.config2.min, device.config2.max]
+        })
+        .catch(error => {
+          console.error(error);
+        })
       }
     },
     fetchDevices: function () {
@@ -150,8 +170,6 @@ var app = new Vue({
         this.devices = response.data;
         if (this.devices.length == 1) {
           this.selected = this.devices[0].id;
-        }
-        if (this.selected) {
           this.deviceSelected();
         }
       })
