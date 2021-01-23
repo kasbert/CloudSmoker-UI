@@ -11,13 +11,22 @@ Vue.component('line-chart', {
     },
   },
   mounted() {
-    this.draw();
+    this.renderLineChart();
   },
-  updated() {
-    this.draw();
+  computed: {
+    chartData: function() {
+      return this.series;
+    }
+  },
+  watch: {
+    series: function() {
+      //this._chart.destroy();
+      //this.renderChart(this.data, this.options);
+      this.renderLineChart();
+    }
   },
   methods: {
-    draw: function () {
+    renderLineChart: function () {
       this.gradient = this.$refs.canvas.getContext('2d').createLinearGradient(0, 0, 0, 450)
       this.gradient2 = this.$refs.canvas.getContext('2d').createLinearGradient(0, 0, 0, 450)
 
@@ -82,18 +91,18 @@ Vue.component('line-chart', {
         ]
       };
 
-      if (this.series && this.series.values) {
+      if (this.chartData && this.chartData.values) {
         for (i of [0, 1, 2, 3]) {
-          // chartdata.datasets[i].label = this.series.columns[i + 1]
+          // chartdata.datasets[i].label = this.chartData.columns[i + 1]
           data = [];
-          for (value of this.series.values) {
+          for (value of this.chartData.values) {
             data.push(value[i + 1]);
           }
           chartdata.datasets[i].data = data;
         }
 
         labels = [];
-        for (value of this.series.values) {
+        for (value of this.chartData.values) {
           // var d = moment(value[0]);d.format('H:mm')
           labels.push(value[0]);
         }
