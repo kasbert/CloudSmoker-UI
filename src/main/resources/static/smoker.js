@@ -98,20 +98,6 @@ Vue.component('line-chart', {
 
 })
 
-function deviceSelected() {
-  console.log(this.selected);
-  for (device of this.devices) {
-    if (device.id = this.selected) {
-      console.log(device);
-      this.config = device.config2;
-      this.state = device.state2;
-      this.state.updateTime = device.state.updateTime;
-      this.series = device.series;
-      this.minmax = [device.config2.min, device.config2.max]
-    }
-  }
-}
-
 var app = new Vue({
   el: '#contents',
   vuetify: new Vuetify(),
@@ -129,39 +115,12 @@ var app = new Vue({
     //  max: 120,
     //  contained: true,
     //},
+    timer: '',
   },
   mounted: function () {
-    axios.defaults.headers.post['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
-    axios.defaults.headers.put['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
-    axios.defaults.headers.delete['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
-    axios
-      .get('/user')
-      .then(response => {
-        this.user = response.data;
-
-        axios
-          .get('/device')
-          .then(response => {
-            this.devices = response.data;
-            if (this.devices.length == 1) {
-              this.selected = this.devices[0].id;
-              this.deviceSelected();
-            }
-          })
-          .catch(error => {
-            console.error(error);
-          })
-
-      })
-      .catch(error => {
-        if (error.response.status == 401) {
-          console.log("Not logged in");
-          this.$set(this.user, 'error', 'No access');
-        } else {
-          console.error(error);
-        }
-      });
-
+    this.fetchUser();
+    this.timer = setInterval(this.refreshDevices, 6000)
+    document.addEventListener('visibilitychange', this.visibilityChange);
   },
   computed: {
     deviceUrl: function () {
@@ -169,7 +128,70 @@ var app = new Vue({
     }
   },
   methods: {
-    deviceSelected: deviceSelected,
+    visibilityChange: function () {
+      doVisualUpdates = !document.hidden;
+      if (document.hidden) {
+        clearInterval(this.timer);
+      } else {
+        clearInterval(this.timer);
+        this.refreshDevices();
+        this.timer = setInterval(this.refreshDevices, 6000)
+      }
+    },
+    refreshDevices: function () {
+      if (this.selected) {
+        this.fetchDevices();
+      }
+    },
+    fetchDevices: function () {
+      axios
+      .get('/device')
+      .then(response => {
+        this.devices = response.data;
+        if (this.devices.length == 1) {
+          this.selected = this.devices[0].id;
+        }
+        if (this.selected) {
+          this.deviceSelected();
+        }
+      })
+      .catch(error => {
+        console.error(error);
+      })
+    },
+    fetchUser () {
+      axios.defaults.headers.post['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
+      axios.defaults.headers.put['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
+      axios.defaults.headers.delete['X-XSRF-TOKEN'] = Cookies.get('XSRF-TOKEN');
+      axios
+        .get('/user')
+        .then(response => {
+          this.user = response.data;
+          this.fetchDevices();
+        })
+        .catch(error => {
+          if (error.response.status == 401) {
+            console.log("Not logged in");
+            this.$set(this.user, 'error', 'No access');
+            this.selected = '';
+          } else {
+            console.error(error);
+          }
+        });
+    },
+    deviceSelected: function () {
+      console.log(this.selected);
+      for (device of this.devices) {
+        if (device.id = this.selected) {
+          console.log(device);
+          this.config = device.config2;
+          this.state = device.state2;
+          this.state.updateTime = device.state.updateTime;
+          this.series = device.series;
+          this.minmax = [device.config2.min, device.config2.max]
+        }
+      }
+    },
     logout: function () {
       axios
         .post('/logout')
@@ -243,5 +265,8 @@ var app = new Vue({
   },
   components: {
     //'vueSlider': window['vue-slider-component'],
+  },
+  beforeDestroy () {
+    clearInterval(this.timer)
   }
 })
