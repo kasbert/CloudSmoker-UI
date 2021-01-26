@@ -141,7 +141,7 @@ var app = new Vue({
   computed: {
     deviceUrl: function () {
       return '/device/' + this.selected;
-    }
+    },
   },
   methods: {
     visibilityChange: function () {
@@ -154,21 +154,34 @@ var app = new Vue({
         this.timer = setInterval(this.refreshDevice, 60000)
       }
     },
+    selectDevice: function(device) {
+      console.log("Select device", device);
+      if (device) {
+        this.config = device.config2;
+        this.state = device.state2;
+        this.state.updateTime = device.state.updateTime;
+        this.series = device.series;
+        this.minmax = [device.config2.min, device.config2.max]
+      } else {
+        this.config = {};
+        this.state = {};
+        this.series = [];
+        this.minmax = [];
+      }
+    },
     refreshDevice: function () {
       if (this.selected) {
         axios
         .get(this.deviceUrl)
         .then(response => {
-          device = response.data;
-          console.log(device);
-          this.config = device.config2;
-          this.state = device.state2;
-          this.state.updateTime = device.state.updateTime;
-          this.series = device.series;
-          this.minmax = [device.config2.min, device.config2.max]
+          this.selectDevice(response.data);
         })
         .catch(error => {
           console.error(error);
+          if (error.response && error.response.status == 401) {
+            clearInterval(this.timer);
+            this.fetchUser();
+          }
         })
       }
     },
@@ -200,7 +213,11 @@ var app = new Vue({
           if (error.response.status == 401) {
             console.log("Not logged in");
             this.$set(this.user, 'error', 'No access');
+            this.$set(this.user, 'login', '');
+            this.$set(this.user, 'name', '');
+            this.selectDevice(null);
             this.selected = '';
+            this.devices = [];
           } else {
             console.error(error);
           }
@@ -210,12 +227,7 @@ var app = new Vue({
       console.log(this.selected);
       for (device of this.devices) {
         if (device.id = this.selected) {
-          console.log(device);
-          this.config = device.config2;
-          this.state = device.state2;
-          this.state.updateTime = device.state.updateTime;
-          this.series = device.series;
-          this.minmax = [device.config2.min, device.config2.max]
+          this.selectDevice(device);
         }
       }
     },
