@@ -33,7 +33,7 @@ public class SmokerApplication extends WebSecurityConfigurerAdapter {
 		// @formatter:off
         http
             .authorizeRequests(a -> a
-                .antMatchers("/", "/error", "/webjars/**", "/smoker.js", "/login*").permitAll()
+                .antMatchers("/", "/error", "/webjars/**", "/*.js", "/*.js.map", "/login*").permitAll()
                 .anyRequest().authenticated()
             )
 			.logout(l -> l
