@@ -133,6 +133,9 @@
 							config</v-btn>
 					</v-form>
 
+					<div class="pt-4" v-if="!series && selected">
+						No statistics data
+					</div>
 					<line-chart v-if="selected" :series="series" />
 
 					<!--

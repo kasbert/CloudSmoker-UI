@@ -216,9 +216,11 @@ public class DeviceController {
 					+ "FROM alldata WHERE time >= now() - 12h GROUP BY time(300s) fill(null)";
 
 			QueryResult queryResult = influxDB.query(new Query(flux));
-			logger.trace("queryResult {}", queryResult);
 			if (queryResult.getResults().size() > 0 && queryResult.getResults().get(0).getSeries() != null) {
 				device.set("series", queryResult.getResults().get(0).getSeries().get(0));
+				logger.trace("queryResult {}", queryResult);
+			} else {
+				logger.debug("queryResult {}", queryResult);
 			}
 		} catch (Throwable t) {
 			logger.error("Cannot fetch influx data", t);
