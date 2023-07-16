@@ -157,11 +157,11 @@ var app = new Vue({
     selectDevice: function(device) {
       console.log("Select device", device);
       if (device) {
-        this.config = device.config2;
-        this.state = device.state2;
-        this.state.updateTime = device.state.updateTime;
+        this.config = device.config;
+        this.config.mode = String(this.config.mode)
+        this.state = device.state;
         this.series = device.series;
-        this.minmax = [device.config2.min, device.config2.max]
+        this.minmax = [device.config.min, device.config.max]
       } else {
         this.config = {};
         this.state = {};
